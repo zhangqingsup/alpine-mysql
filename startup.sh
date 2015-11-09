@@ -6,6 +6,8 @@ else
   echo "[i] MySQL data directory not found, creating initial DBs"
 
   mysql_install_db --user=root > /dev/null
+  echo "[i] Start MySQL first time."
+  /usr/bin/mysqld --user=root &
 
   if [ "$MYSQL_ROOT_PASSWORD" = "" ]; then
     MYSQL_ROOT_PASSWORD=111111
@@ -27,11 +29,9 @@ else
 
   cat << EOF > $tfile
 USE mysql;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY '' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
-UPDATE user SET password=PASSWORD("$MYSQL_ROOT_PASSWORD") WHERE user='root';
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
-UPDATE user SET password=PASSWORD("") WHERE user='root' AND host='localhost';
 EOF
 
   if [ "$MYSQL_DATABASE" != "" ]; then
@@ -44,7 +44,14 @@ EOF
     fi
   fi
 
-  /usr/bin/mysqld --user=root --bootstrap --verbose=0 < $tfile
+  echo "[i] Show \$tfile content $tfile"
+  echo "[i] Sleep 6s"
+  sleep 6;
+  cat $tfile
+  /usr/bin/mysql < $tfile
+  /usr/bin/mysql -e 'select user,host,password from mysql.user'
+  /usr/bin/mysqladmin shutdown
+  echo "[i] Stop MySQL..."
   rm -f $tfile
 fi
 
