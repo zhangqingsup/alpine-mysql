@@ -16,4 +16,4 @@ RUN set -ex \
 COPY my.cnf /etc/mysql/my.cnf
 
 EXPOSE 3306
-CMD ["/startup.sh"]
+CMD ["echo start mysql"]
